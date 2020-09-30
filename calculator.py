@@ -9,7 +9,7 @@ from functools import partial
 ERROR_MSG = "ERROR"
 BUTTONS = {"AC": (0, 0),
            "+/-": (0, 1),
-           "%": (0, 2),
+           "^": (0, 2),
            "/": (0, 3),
            "7": (1, 0),
            "8": (1, 1),
@@ -108,16 +108,6 @@ class Control():
     except ValueError:
       number = self._view.display_text()
     self._view.set_display_text(number)
-
-  def as_percent(self):
-    """Show the integer displayed as a percentage."""
-    if self._view.display_text() == ERROR_MSG:
-      self._view.clear_display()
-    try:
-      number = str(0.01 * float(self._view.display_text()))
-    except ValueError:
-      number = self._view.display_text()
-    self._view.set_display_text(number)
   
   def _connect_signals(self):
     """Connect the functions of buttons to the corresponding buttons on the calculator GUI."""
@@ -125,7 +115,6 @@ class Control():
       if button_text not in {"=", "AC", "+/-", "%"}:
         button.clicked.connect(partial(self._build_expression, button_text))
     self._view.buttons["+/-"].clicked.connect(self.switch_sign)
-    self._view.buttons["%"].clicked.connect(self.as_percent)
     self._view.buttons["="].clicked.connect(self._calculate_result)
     self._view.display.returnPressed.connect(self._calculate_result)
     self._view.buttons["AC"].clicked.connect(self._view.clear_display)
@@ -142,10 +131,6 @@ def main():
 
 """
 Some edges:
-- 2+-3 => -5    | -1
-- 1+2-3 => -24  | 0
-- 1+2--3 => -24 | 0
-- 1-2+3 => -15  | 2
 - *** => 0      | ERROR
 - alpha => 0    | ERROR
 
@@ -192,6 +177,8 @@ def my_eval(expression):
         intermediate_endr *= endr
       elif current_operator == "/":
         intermediate_endr = int(intermediate_endr / endr)
+      elif current_operator == "^":
+        intermediate_endr = int(intermediate_endr ** endr)
       current_operator = current_char
       endr = 0
     elif current_char.isdigit():
@@ -206,7 +193,7 @@ def is_op(c):
   Keyword Arguments:
   c -- character to check if "+", "-", "*", or "/"
   """
-  return c in {"+", "-", "*", "/"}
+  return c in {"+", "-", "*", "/", "^"}
 
 
 def evaluate_expression(expression):
