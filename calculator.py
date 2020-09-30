@@ -32,108 +32,135 @@ class Calculator(QMainWindow):
   def __init__(self):
     super().__init__()
     self.setWindowTitle("Helena's Calculator")
-    self.generalLayout = QVBoxLayout()
-    self._centralWidget = QWidget(self)
-    self.setCentralWidget(self._centralWidget)
-    self._centralWidget.setLayout(self.generalLayout)
-    self._createDisplay()
+    self.general_layout = QVBoxLayout()
+    self._central_widget = QWidget(self)
+    self.setCentralWidget(self._central_widget)
+    self._central_widget.setLayout(self.general_layout)
+    self._create_display()
     self._createButtons()
-  
-  def _createDisplay(self):
+
+  def _create_display(self):
+    """Creates a textbox to display expressions."""
     self.display = QLineEdit()
     self.display.setFixedHeight(35)
     self.display.setAlignment(Qt.AlignRight)
-    self.generalLayout.addWidget(self.display)
+    self.general_layout.addWidget(self.display)
 
   def _createButtons(self):
+    """Creates buttons for every button in BUTTONS at their defined positions."""
     self.buttons = {}
-    buttonsLayout = QGridLayout()
-    for buttonText, pos in BUTTONS.items():
-      self.buttons[buttonText] = QPushButton(buttonText)
-      if (buttonText == "0"):
-        self.buttons[buttonText].setFixedSize(210, 35)
-        buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1], pos[2], pos[3])
+    buttons_layout = QGridLayout()
+    for button_text, pos in BUTTONS.items():
+      self.buttons[button_text] = QPushButton(button_text)
+      if (button_text == "0"):
+        self.buttons[button_text].setFixedSize(210, 35)
+        buttons_layout.addWidget(self.buttons[button_text], pos[0], pos[1], pos[2], pos[3])
       else:
-        self.buttons[buttonText].setFixedSize(70, 35)
-        buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1])
-    self.generalLayout.addLayout(buttonsLayout)
+        self.buttons[button_text].setFixedSize(70, 35)
+        buttons_layout.addWidget(self.buttons[button_text], pos[0], pos[1])
+    self.general_layout.addLayout(buttons_layout)
 
-  def setDisplayText(self, text):
+  def set_display_text(self, text):
+    """Update the expression in display with the given text parameter.
+    
+    Keyword Arguments:
+    text -- the text to update the display view
+    """
     self.display.setText(text)
     self.display.setFocus()
   
-  def displayText(self):
+  def display_text(self):
+    """Return the expression shown."""
     return self.display.text()
 
-  def clearDisplay(self):
-    self.setDisplayText('')
+  def clear_display(self):
+    """Reset expression to empty string."""
+    self.set_display_text('')
 
 
 class Control():
   def __init__(self, model, view):
     self._evaluate = model
     self._view = view
-    self._connectSignals()
+    self._connect_signals()
   
-  def _calculateResult(self):
-    result = self._evaluate(expression=self._view.displayText())
-    self._view.setDisplayText(result)
+  def _calculate_result(self):
+    result = self._evaluate(expression=self._view.display_text())
+    self._view.set_display_text(result)
 
-  def _buildExpression(self, buttonPressedText):
-    if self._view.displayText() == ERROR_MSG:
-      self._view.clearDisplay()
-    expression = self._view.displayText() + buttonPressedText
-    self._view.setDisplayText(expression)
+  def _build_expression(self, button_pressed_text):
+    """Append expression with text from the clicked button.
 
-  def switchSign(self):
-    if self._view.displayText() == ERROR_MSG:
-      self._view.clearDisplay()
+    Keyword arguments:
+    button_pressed_text -- the button's text to append to the end of the expression before updating display_text
+    """
+    if self._view.display_text() == ERROR_MSG:
+      self._view.clear_display()
+    expression = self._view.display_text() + button_pressed_text
+    self._view.set_display_text(expression)
+
+  def switch_sign(self):
+    """Switch the integer displayed to have the opposite sign."""
+    if self._view.display_text() == ERROR_MSG:
+      self._view.clear_display()
     try:
-      number = str(-1 * int(self._view.displayText()))
+      number = str(-1 * int(self._view.display_text()))
     except ValueError:
-      number = self._view.displayText()
-    self._view.setDisplayText(number)
+      number = self._view.display_text()
+    self._view.set_display_text(number)
 
-  def asPercent(self):
-    if self._view.displayText() == ERROR_MSG:
-      self._view.clearDisplay()
+  def as_percent(self):
+    """Show the integer displayed as a percentage."""
+    if self._view.display_text() == ERROR_MSG:
+      self._view.clear_display()
     try:
-      number = str(0.01 * float(self._view.displayText()))
+      number = str(0.01 * float(self._view.display_text()))
     except ValueError:
-      number = self._view.displayText()
-    self._view.setDisplayText(number)
+      number = self._view.display_text()
+    self._view.set_display_text(number)
   
-  def _connectSignals(self):
-    for buttonText, button in self._view.buttons.items():
-      if buttonText not in {"=", "AC", "+/-", "%"}:
-        button.clicked.connect(partial(self._buildExpression, buttonText))
-    self._view.buttons["+/-"].clicked.connect(self.switchSign)
-    self._view.buttons["%"].clicked.connect(self.asPercent)
-    self._view.buttons["="].clicked.connect(self._calculateResult)
-    self._view.display.returnPressed.connect(self._calculateResult)
-    self._view.buttons["AC"].clicked.connect(self._view.clearDisplay)
+  def _connect_signals(self):
+    """Connect the functions of buttons to the corresponding buttons on the calculator GUI."""
+    for button_text, button in self._view.buttons.items():
+      if button_text not in {"=", "AC", "+/-", "%"}:
+        button.clicked.connect(partial(self._build_expression, button_text))
+    self._view.buttons["+/-"].clicked.connect(self.switch_sign)
+    self._view.buttons["%"].clicked.connect(self.as_percent)
+    self._view.buttons["="].clicked.connect(self._calculate_result)
+    self._view.display.returnPressed.connect(self._calculate_result)
+    self._view.buttons["AC"].clicked.connect(self._view.clear_display)
 
 
 def main():
   calc = QApplication(sys.argv)
   view = Calculator()
   view.show()
-  model = evaluateExpression
+  model = evaluate_expression
   Control(model=model, view=view)
   sys.exit(calc.exec())
 
 
-def myEval(expression):
-  result = 0 # holds result of subexpression evaluated so far
-  intermediate_endr = 0 # the larger, accumulated addend, subtrahend, multiplier, or divisor to calculate with the current result; i.e. results of parenthesized expressions
-  endr = 0 # to describe addend, subtrahend, multiplier, and divisors
+def my_eval(expression):
+  """Return the value of the evaluated expression.
+  
+  Keyword Arguments:
+  expression -- the expression to evaluate
+
+  result -- holds result of subexpression evaluated so far; helpful if () included
+  intermediate_endr -- the larger, accumulated addend, subtrahend, multiplier, or divisor to calculate with the current result; i.e. results of parenthesized expressions
+  endr -- to describe addend, subtrahend, multiplier, and divisors
+  sign -- sign of the endr
+  """
+  result = 0
+  intermediate_endr = 0
+  endr = 0
   sign = 1
   current_operator = "+"
   for index,current_char in enumerate(expression + "+"):
     if (index > 0 and expression[index - 1] and current_char == "-"):
       sign = -1
       continue
-    elif isOp(current_char):
+    elif is_op(current_char):
       if current_operator == "+":
         result += intermediate_endr
         intermediate_endr = endr
@@ -151,13 +178,23 @@ def myEval(expression):
   return int(sign * (result + intermediate_endr))
 
 
-def isOp(c):
+def is_op(c):
+  """Returns if a char is one of four arithmetic operations.
+  
+  Keyword Arguments:
+  c -- character to check if "+", "-", "*", or "/"
+  """
   return c in {"+", "-", "*", "/"}
 
 
-def evaluateExpression(expression):
+def evaluate_expression(expression):
+  """Return ERROR_MSG or value of the evaluated expression.
+
+  Keyword Arguments:
+  expression -- expression to be evaluated
+  """
   try:
-    result = str(myEval(expression))
+    result = str(my_eval(expression))
   except Exception as e:
     print(e)
     result = ERROR_MSG
@@ -166,6 +203,4 @@ def evaluateExpression(expression):
 
 if __name__ == "__main__":
   main()
-  # test = '97- 8+ 6*23/9182'
-  # print(re.split('0|1|2|3|4|5|6|7|8|9|', test))
   
