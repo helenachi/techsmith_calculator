@@ -23,9 +23,7 @@ BUTTONS = {"AC": (0, 0),
            "2": (3, 1),
            "3": (3, 2),
            "+": (3, 3),
-           "0": (4, 0),
-          #  "(": (4, 1),
-          #  ")": (4, 2),
+           "0": (4, 0, 1, 3),
            "=": (4, 3),
            }
 
@@ -52,8 +50,12 @@ class Calculator(QMainWindow):
     buttonsLayout = QGridLayout()
     for buttonText, pos in BUTTONS.items():
       self.buttons[buttonText] = QPushButton(buttonText)
-      self.buttons[buttonText].setFixedSize(70, 35)
-      buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1])
+      if (buttonText == "0"):
+        self.buttons[buttonText].setFixedSize(210, 35)
+        buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1], pos[2], pos[3])
+      else:
+        self.buttons[buttonText].setFixedSize(70, 35)
+        buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1])
     self.generalLayout.addLayout(buttonsLayout)
 
   def setDisplayText(self, text):
@@ -122,16 +124,16 @@ def main():
 
 
 def myEval(expression):
-  result = 0
-  intermediate_endr = 0 # the larger, accumulated addend, subtrahend, multiplier, or divisor to calculate with the current result
+  result = 0 # holds result of subexpression evaluated so far
+  intermediate_endr = 0 # the larger, accumulated addend, subtrahend, multiplier, or divisor to calculate with the current result; i.e. results of parenthesized expressions
   endr = 0 # to describe addend, subtrahend, multiplier, and divisors
-  # sign = 1
+  sign = 1
   current_operator = "+"
-  print(expression + "+")
-  for _,current_char in enumerate(expression + "+"):
-    print("endr:", endr)
-    print("current_char: ", current_char)
-    if isOp(current_char):
+  for index,current_char in enumerate(expression + "+"):
+    if (index > 0 and expression[index - 1] and current_char == "-"):
+      sign = -1
+      continue
+    elif isOp(current_char):
       if current_operator == "+":
         result += intermediate_endr
         intermediate_endr = endr
@@ -146,7 +148,7 @@ def myEval(expression):
       endr = 0
     elif current_char.isdigit():
       endr = (endr * 10) + int(current_char)
-  return result + intermediate_endr
+  return int(sign * (result + intermediate_endr))
 
 
 def isOp(c):
