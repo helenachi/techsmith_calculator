@@ -140,6 +140,27 @@ def main():
   sys.exit(calc.exec())
 
 
+"""
+Some edges:
+- 2+-3 => -5    | -1
+- 1+2-3 => -24  | 0
+- 1+2--3 => -24 | 0
+- 1-2+3 => -15  | 2
+- *** => 0      | ERROR
+- alpha => 0    | ERROR
+
+Extended Features:
+- exponent, square roots, square
+- ()
+- decimal math
+- why do you have %
+  # decimal_place = 1
+  # 0.98
+  # endr = 0
+  # !!! hit decimal !!!
+  # endr + (current_char / (10 ** decimal_place)) ; decimal_place += 1 ==> 0 + (9 / 10) ==> 0 + 0.9. ==> 0.9
+  # 0.9 + (8 / (10 ** 2)) ==> 0.9 + 0.08 ==> 0.98
+"""
 def my_eval(expression):
   """Return the value of the evaluated expression.
   
@@ -157,7 +178,7 @@ def my_eval(expression):
   sign = 1
   current_operator = "+"
   for index,current_char in enumerate(expression + "+"):
-    if (index > 0 and expression[index - 1] and current_char == "-"):
+    if (index > 0 and is_op(expression[index - 1]) and current_char == "-"):
       sign = -1
       continue
     elif is_op(current_char):
@@ -174,9 +195,10 @@ def my_eval(expression):
       current_operator = current_char
       endr = 0
     elif current_char.isdigit():
-      endr = (endr * 10) + int(current_char)
+      endr = (endr * 10) + (sign * int(current_char))
+      sign = 1
   return int(sign * (result + intermediate_endr))
-
+  
 
 def is_op(c):
   """Returns if a char is one of four arithmetic operations.
