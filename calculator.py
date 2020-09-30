@@ -1,4 +1,5 @@
 import sys
+import re
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QGridLayout, QVBoxLayout, QWidget, QPushButton, QLineEdit 
 from PyQt5.QtCore import Qt
@@ -22,8 +23,9 @@ BUTTONS = {"AC": (0, 0),
            "2": (3, 1),
            "3": (3, 2),
            "+": (3, 3),
-           "0": (4, 0, 1, 2),
-           ".": (4, 2),
+           "0": (4, 0),
+          #  "(": (4, 1),
+          #  ")": (4, 2),
            "=": (4, 3),
            }
 
@@ -50,12 +52,8 @@ class Calculator(QMainWindow):
     buttonsLayout = QGridLayout()
     for buttonText, pos in BUTTONS.items():
       self.buttons[buttonText] = QPushButton(buttonText)
-      if (buttonText == "0"):
-        self.buttons[buttonText].setFixedSize(140, 35)
-        buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1], pos[2], pos[3], Qt.AlignHCenter)
-      else:
-        self.buttons[buttonText].setFixedSize(70, 35)
-        buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1])
+      self.buttons[buttonText].setFixedSize(70, 35)
+      buttonsLayout.addWidget(self.buttons[buttonText], pos[0], pos[1])
     self.generalLayout.addLayout(buttonsLayout)
 
   def setDisplayText(self, text):
@@ -89,7 +87,7 @@ class Control():
     if self._view.displayText() == ERROR_MSG:
       self._view.clearDisplay()
     try:
-      number = str(-1 * float(self._view.displayText()))
+      number = str(-1 * int(self._view.displayText()))
     except ValueError:
       number = self._view.displayText()
     self._view.setDisplayText(number)
@@ -122,10 +120,31 @@ def main():
   Control(model=model, view=view)
   sys.exit(calc.exec())
 
+def myEval(expression):
+  # print(expression, " is type: ", type(expression))
+  integers = parseExpression(expression)[0]
+  operations = parseExpression(expression)[1]
+  result = int(integers[0])
+  for i,oval in enumerate(operations):
+    other = int(integers[i+1])
+    if oval == "+":
+      result += other
+    elif oval == "-":
+      result -= other
+    elif oval == "*":
+      result = result * other
+    elif oval == "/":
+      result = result / other
+  return result
+
+def parseExpression(expression):
+  integers = [ival for ival in re.split('\+|-|\*|/', expression) if ival.isdigit()]
+  operations = [oval for oval in re.split('0|1|2|3|4|5|6|7|8|9|', expression) if oval in {"+", "-", "*", "/"}]
+  return (integers, operations[:len(integers)])
 
 def evaluateExpression(expression):
   try:
-    result = str(eval(expression))
+    result = str(myEval(expression))
   except Exception:
     result = ERROR_MSG
   return result
@@ -133,3 +152,6 @@ def evaluateExpression(expression):
 
 if __name__ == "__main__":
   main()
+  # test = '97- 8+ 6*23/9182'
+  # print(re.split('0|1|2|3|4|5|6|7|8|9|', test))
+  
