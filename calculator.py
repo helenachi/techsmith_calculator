@@ -120,32 +120,44 @@ def main():
   Control(model=model, view=view)
   sys.exit(calc.exec())
 
-def myEval(expression):
-  # print(expression, " is type: ", type(expression))
-  integers = parseExpression(expression)[0]
-  operations = parseExpression(expression)[1]
-  result = int(integers[0])
-  for i,oval in enumerate(operations):
-    other = int(integers[i+1])
-    if oval == "+":
-      result += other
-    elif oval == "-":
-      result -= other
-    elif oval == "*":
-      result = result * other
-    elif oval == "/":
-      result = result / other
-  return result
 
-def parseExpression(expression):
-  integers = [ival for ival in re.split('\+|-|\*|/', expression) if ival.isdigit()]
-  operations = [oval for oval in re.split('0|1|2|3|4|5|6|7|8|9|', expression) if oval in {"+", "-", "*", "/"}]
-  return (integers, operations[:len(integers)])
+def myEval(expression):
+  result = 0
+  intermediate_endr = 0 # the larger, accumulated addend, subtrahend, multiplier, or divisor to calculate with the current result
+  endr = 0 # to describe addend, subtrahend, multiplier, and divisors
+  # sign = 1
+  current_operator = "+"
+  print(expression + "+")
+  for _,current_char in enumerate(expression + "+"):
+    print("endr:", endr)
+    print("current_char: ", current_char)
+    if isOp(current_char):
+      if current_operator == "+":
+        result += intermediate_endr
+        intermediate_endr = endr
+      elif current_operator == "-":
+        result += intermediate_endr
+        intermediate_endr = -1 * endr
+      elif current_operator == "*":
+        intermediate_endr *= endr
+      elif current_operator == "/":
+        intermediate_endr = int(intermediate_endr / endr)
+      current_operator = current_char
+      endr = 0
+    elif current_char.isdigit():
+      endr = (endr * 10) + int(current_char)
+  return result + intermediate_endr
+
+
+def isOp(c):
+  return c in {"+", "-", "*", "/"}
+
 
 def evaluateExpression(expression):
   try:
     result = str(myEval(expression))
-  except Exception:
+  except Exception as e:
+    print(e)
     result = ERROR_MSG
   return result
 
